@@ -3,7 +3,7 @@
 #kix-executor {
   position: fixed; top: 100px; left: 100px; width: 550px; height: 500px;
   border-radius: 12px; z-index: 2147483647; display: flex; flex-direction: column;
-  font-family: 'Inter', sans-serif; overflow: hidden; transition: background 0.3s, color 0.3s;
+  font-family: 'Inter', sans-serif; overflow: hidden; transition: background 0.3s, color 0.3s, border-color 0.3s;
 }
 #kix-executor.light-glass {
   background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(20px) saturate(200%);
@@ -27,7 +27,7 @@
 .kix-htab:hover, .kix-htab.active { opacity: 1; font-weight: 600; }
 .dark-glass .kix-htab.active { color: #00ffcc; }
 .kix-window-controls { margin-left: auto; display: flex; gap: 12px; }
-.kix-window-controls span { cursor: pointer; font-size: 14px; opacity: 0.6; }
+.kix-window-controls span { cursor: pointer; font-size: 13px; font-weight: 600; opacity: 0.6; }
 .kix-window-controls span:hover { opacity: 1; }
 
 /* Login Overlay */
@@ -50,7 +50,7 @@
 .kix-lang-btn { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 120px; padding: 20px; border-radius: 12px; cursor: pointer; background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.05); color: inherit; font-size: 14px; font-weight: 500; transition: 0.2s; }
 .dark-glass .kix-lang-btn { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
 .kix-lang-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-.kix-lang-btn .icon { font-size: 24px; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #f7df1e; }
+.kix-lang-btn .icon { font-size: 24px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
 
 /* Toolbar & Editor */
 .kix-toolbar { padding: 8px 15px; display: flex; gap: 10px; border-bottom: 1px solid rgba(0, 0, 0, 0.05); align-items: center; }
