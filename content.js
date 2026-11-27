@@ -3,7 +3,16 @@ if (!document.getElementById("kix-executor")) {
   ui.id = "kix-executor";
   ui.className = "light-glass";
 
-  const targetHash = "7852c7ed159667a5b9e26c042af96fca\n90610908a1de9b06bfaf5d6c1151190d\nf5b07437af6dff5c84a4f57256ae64e4\n83ff5eca4e8c8ded0d2852697ac1899f\n824ec35aabbffd7090ed1cb2c33a3558\ndacf49b406a563046c114d19194e8bcd\n08760b0dce6c5ef06aac4a1ab627620e\n4b849ec61040a3f22cbf097c3e1da1f4\nfac2f9ca122838cf12c263f0dbd4397d\n4b76ffcb26cf60a587387ddd4aba5ca2";
+  // SHA-256 Hash of the target credential
+  // 7852c7ed159667a5b9e26c042af96fca...ca2
+  const targetHash = "a4a33c5d40371222d1a3b7f880c5c1d5b6e3e4f5d6a7b8c9d0e1f2a3b4c5d6e7"; // Placeholder (See below to generate your real hash)
+
+  async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
 
   ui.innerHTML = `
     <div id="kix-header">
@@ -14,7 +23,7 @@ if (!document.getElementById("kix-executor")) {
         <span class="kix-htab" data-target="devtools">DevTools</span>
       </div>
       <div class="kix-window-controls">
-        <span id="kix-settings-btn" title="Settings">Settings</span>
+        <span id="kix-settings-btn">Settings</span>
         <span id="kix-close">X</span>
       </div>
     </div>
@@ -27,7 +36,6 @@ if (!document.getElementById("kix-executor")) {
     </div>
 
     <div id="kix-main-app">
-      <!-- HOME TAB -->
       <div id="kix-content-home" class="kix-tab-content active">
         <div class="kix-home-container">
           <h2>Welcome, Admin</h2>
@@ -43,7 +51,6 @@ if (!document.getElementById("kix-executor")) {
         </div>
       </div>
 
-      <!-- EXECUTOR TAB -->
       <div id="kix-content-executor" class="kix-tab-content">
         <div class="kix-toolbar">
           <span id="current-mode-display" style="font-size:12px; font-weight:600; color:#888;">Mode: JavaScript (Page)</span>
@@ -58,7 +65,6 @@ if (!document.getElementById("kix-executor")) {
         </div>
       </div>
 
-      <!-- DEVTOOLS TAB -->
       <div id="kix-content-devtools" class="kix-tab-content">
         <div class="kix-toolbar">
           <button class="kix-btn dev-btn" data-action="html">Page HTML</button>
@@ -70,7 +76,6 @@ if (!document.getElementById("kix-executor")) {
         </div>
       </div>
 
-      <!-- SETTINGS TAB -->
       <div id="kix-content-settings" class="kix-tab-content">
         <div class="kix-home-container">
           <h2>Settings</h2>
@@ -84,15 +89,12 @@ if (!document.getElementById("kix-executor")) {
         </div>
       </div>
     </div>
-
-    <iframe id="kix-sandbox" src="${chrome.runtime.getURL('iframe.html')}" style="display:none;"></iframe>
   `;
   document.body.appendChild(ui);
 
-  // --- State ---
   let execMode = "page";
 
-  // --- Drag & Window Controls ---
+  // Drag Logic
   const header = document.getElementById("kix-header");
   let isDragging = false, offsetX, offsetY;
   header.addEventListener("mousedown", (e) => {
@@ -110,10 +112,15 @@ if (!document.getElementById("kix-executor")) {
   document.addEventListener("mouseup", () => { isDragging = false; });
   document.getElementById("kix-close").addEventListener("click", () => ui.remove());
 
-  // --- Login ---
-  document.getElementById("kix-login-btn").addEventListener("click", () => {
+  // Login Logic (SHA-256 Verification)
+  document.getElementById("kix-login-btn").addEventListener("click", async () => {
     const input = document.getElementById("kix-hash-input").value.trim();
-    if (input === targetHash) {
+    const inputHash = await sha256(input);
+    
+    // To get your actual hash, type your password in the console:
+    // sha256("YOUR_PASSWORD_HERE").then(console.log)
+    
+    if (inputHash === targetHash) {
       const overlay = document.getElementById("kix-login-overlay");
       overlay.style.transform = "translateY(-100%)";
       overlay.style.opacity = "0";
@@ -126,7 +133,7 @@ if (!document.getElementById("kix-executor")) {
     }
   });
 
-  // --- Tabs ---
+  // Tab Logic
   const hTabs = document.querySelectorAll(".kix-htab");
   const contents = document.querySelectorAll(".kix-tab-content");
   function switchTab(targetId) {
@@ -140,55 +147,51 @@ if (!document.getElementById("kix-executor")) {
   hTabs.forEach(tab => tab.addEventListener("click", () => switchTab(tab.dataset.target)));
   document.getElementById("kix-settings-btn").addEventListener("click", () => switchTab("settings"));
 
-  // --- Home Buttons ---
+  // Home Buttons
   const modeDisplay = document.getElementById("current-mode-display");
   const codeInput = document.getElementById("kix-code");
 
   document.getElementById("select-page").addEventListener("click", () => {
     execMode = "page";
     modeDisplay.textContent = "Mode: JavaScript (Page)";
-    codeInput.placeholder = "// Manipulate the webpage DOM here...";
+    codeInput.placeholder = "// Example: document.body.style.background = 'red'";
     switchTab("executor");
   });
 
   document.getElementById("select-api").addEventListener("click", () => {
     execMode = "api";
-    modeDisplay.textContent = "Mode: Chrome API (Extension)";
-    codeInput.placeholder = "// Access chrome.cookies, chrome.tabs, etc...";
+    modeDisplay.textContent = "Mode: Chrome API (Parser)";
+    codeInput.placeholder = "// Type 'tabs', 'cookies', or 'history'";
     switchTab("executor");
   });
 
-  // --- Execution Logic ---
+  // Executor Logic
   const consoleOutput = document.getElementById("kix-console-output");
-  const sandbox = document.getElementById("kix-sandbox");
 
   document.getElementById("kix-exec").addEventListener("click", () => {
     const code = codeInput.value.trim();
     if (!code) return;
-    
     consoleOutput.innerHTML = ""; 
 
-    if (execMode === "api") {
-      sandbox.contentWindow.postMessage({ action: "execute", code: code }, "*");
-    } else {
-      const line = document.createElement("div");
-      line.style.color = "#ffaa00";
-      line.textContent = "Executing on page...";
-      consoleOutput.appendChild(line);
+    const line = document.createElement("div");
+    line.style.color = "#ffaa00";
+    line.textContent = "Executing...";
+    consoleOutput.appendChild(line);
 
-      chrome.runtime.sendMessage({ action: "execute_js", code: code }, (response) => {
-        consoleOutput.innerHTML = "";
-        const resLine = document.createElement("div");
-        if (response.error) {
-          resLine.style.color = "#ff5555";
-          resLine.textContent = "[Error] " + response.error;
-        } else {
-          resLine.style.color = "#00ffcc";
-          resLine.textContent = "[Result] " + (response.result || "Executed successfully (no output).");
-        }
-        consoleOutput.appendChild(resLine);
-      });
-    }
+    const actionType = execMode === "api" ? "execute_api" : "execute_js";
+
+    chrome.runtime.sendMessage({ action: actionType, code: code }, (response) => {
+      consoleOutput.innerHTML = "";
+      const resLine = document.createElement("div");
+      if (response.error) {
+        resLine.style.color = "#ff5555";
+        resLine.textContent = "[Error] " + response.error;
+      } else {
+        resLine.style.color = "#00ffcc";
+        resLine.textContent = "[Result] " + (response.result || "Executed successfully.");
+      }
+      consoleOutput.appendChild(resLine);
+    });
   });
 
   document.getElementById("kix-clear").addEventListener("click", () => {
@@ -196,32 +199,13 @@ if (!document.getElementById("kix-executor")) {
     consoleOutput.innerHTML = '<div style="color:#666;">Console output will appear here...</div>';
   });
 
-  // Listen to Console Logs from the Iframe
-  window.addEventListener("message", (e) => {
-    if (e.data.action === "console") {
-      const line = document.createElement("div");
-      line.style.marginBottom = "4px";
-      if (e.data.type === "error") {
-        line.style.color = "#ff5555"; 
-        line.textContent = "[Error] " + e.data.text;
-      } else if (e.data.type === "result") {
-        line.style.color = "#00ffcc"; 
-        line.textContent = "[Result] " + e.data.text;
-      } else {
-        line.style.color = "#333"; 
-        line.textContent = "[Log] " + e.data.text;
-      }
-      consoleOutput.appendChild(line);
-      consoleOutput.scrollTop = consoleOutput.scrollHeight;
-    }
-  });
-
-  // --- DevTools Logic ---
+  // DevTools Logic
   const devOutput = document.getElementById("kix-dev-output");
   document.querySelectorAll(".dev-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const action = btn.dataset.action;
       devOutput.textContent = "Loading...";
+      
       if (action === "html") {
         devOutput.textContent = document.documentElement.outerHTML.substring(0, 10000) + "\n\n...[TRUNCATED]";
       } else if (action === "cookies") {
@@ -237,7 +221,7 @@ if (!document.getElementById("kix-executor")) {
     });
   });
 
-  // --- Theme ---
+  // Theme Toggle
   document.getElementById("theme-toggle").addEventListener("change", (e) => {
     if (e.target.checked) { 
       ui.classList.remove("light-glass"); 
