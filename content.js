@@ -14,8 +14,8 @@ if (!document.getElementById("kix-executor")) {
         <span class="kix-htab" data-target="devtools">DevTools</span>
       </div>
       <div class="kix-window-controls">
-        <span id="kix-settings-btn" title="Settings">&#9881;</span>
-        <span id="kix-close">&#10005;</span>
+        <span id="kix-settings-btn" title="Settings">Settings</span>
+        <span id="kix-close">X</span>
       </div>
     </div>
     
@@ -33,8 +33,11 @@ if (!document.getElementById("kix-executor")) {
           <h2>Welcome, Admin</h2>
           <p>Select an execution environment:</p>
           <div class="kix-lang-buttons">
-            <button class="kix-lang-btn" id="select-js">
-              <span class="icon">JS</span> Chrome API
+            <button class="kix-lang-btn" id="select-page">
+              <span class="icon" style="color: #f7df1e;">JS</span> JavaScript
+            </button>
+            <button class="kix-lang-btn" id="select-api">
+              <span class="icon" style="color: #00ffcc;">API</span> Chrome API
             </button>
           </div>
         </div>
@@ -43,12 +46,12 @@ if (!document.getElementById("kix-executor")) {
       <!-- EXECUTOR TAB -->
       <div id="kix-content-executor" class="kix-tab-content">
         <div class="kix-toolbar">
-          <span style="font-size:12px; font-weight:600; color:#888;">Context: chrome.*</span>
-          <button class="kix-btn" id="kix-exec" style="margin-left:auto;">&#9654; Execute</button>
-          <button class="kix-btn" id="kix-clear">&#128465; Clear</button>
+          <span id="current-mode-display" style="font-size:12px; font-weight:600; color:#888;">Mode: JavaScript (Page)</span>
+          <button class="kix-btn" id="kix-exec" style="margin-left:auto;">Execute</button>
+          <button class="kix-btn" id="kix-clear">Clear</button>
         </div>
         <div class="kix-editor" style="flex: 2;">
-          <textarea id="kix-code" spellcheck="false" placeholder="// Example: chrome.tabs.query({}, console.log);"></textarea>
+          <textarea id="kix-code" spellcheck="false" placeholder="// Type code here..."></textarea>
         </div>
         <div class="kix-console" id="kix-console-output">
           <div style="color:#666;">Console output will appear here...</div>
@@ -82,12 +85,14 @@ if (!document.getElementById("kix-executor")) {
       </div>
     </div>
 
-    <!-- Hidden Iframe for Chrome API Execution -->
     <iframe id="kix-sandbox" src="${chrome.runtime.getURL('iframe.html')}" style="display:none;"></iframe>
   `;
   document.body.appendChild(ui);
 
-  // --- Drag & Window Logic ---
+  // --- State ---
+  let execMode = "page";
+
+  // --- Drag & Window Controls ---
   const header = document.getElementById("kix-header");
   let isDragging = false, offsetX, offsetY;
   header.addEventListener("mousedown", (e) => {
@@ -105,7 +110,7 @@ if (!document.getElementById("kix-executor")) {
   document.addEventListener("mouseup", () => { isDragging = false; });
   document.getElementById("kix-close").addEventListener("click", () => ui.remove());
 
-  // --- Login Logic ---
+  // --- Login ---
   document.getElementById("kix-login-btn").addEventListener("click", () => {
     const input = document.getElementById("kix-hash-input").value.trim();
     if (input === targetHash) {
@@ -121,7 +126,7 @@ if (!document.getElementById("kix-executor")) {
     }
   });
 
-  // --- Tab Logic ---
+  // --- Tabs ---
   const hTabs = document.querySelectorAll(".kix-htab");
   const contents = document.querySelectorAll(".kix-tab-content");
   function switchTab(targetId) {
@@ -135,11 +140,25 @@ if (!document.getElementById("kix-executor")) {
   hTabs.forEach(tab => tab.addEventListener("click", () => switchTab(tab.dataset.target)));
   document.getElementById("kix-settings-btn").addEventListener("click", () => switchTab("settings"));
 
-  // --- Home Menu ---
-  document.getElementById("select-js").addEventListener("click", () => switchTab("executor"));
-
-  // --- Execution Logic (Chrome API) ---
+  // --- Home Buttons ---
+  const modeDisplay = document.getElementById("current-mode-display");
   const codeInput = document.getElementById("kix-code");
+
+  document.getElementById("select-page").addEventListener("click", () => {
+    execMode = "page";
+    modeDisplay.textContent = "Mode: JavaScript (Page)";
+    codeInput.placeholder = "// Manipulate the webpage DOM here...";
+    switchTab("executor");
+  });
+
+  document.getElementById("select-api").addEventListener("click", () => {
+    execMode = "api";
+    modeDisplay.textContent = "Mode: Chrome API (Extension)";
+    codeInput.placeholder = "// Access chrome.cookies, chrome.tabs, etc...";
+    switchTab("executor");
+  });
+
+  // --- Execution Logic ---
   const consoleOutput = document.getElementById("kix-console-output");
   const sandbox = document.getElementById("kix-sandbox");
 
@@ -147,8 +166,29 @@ if (!document.getElementById("kix-executor")) {
     const code = codeInput.value.trim();
     if (!code) return;
     
-    consoleOutput.innerHTML = ""; // Clear previous
-    sandbox.contentWindow.postMessage({ action: "execute", code: code }, "*");
+    consoleOutput.innerHTML = ""; 
+
+    if (execMode === "api") {
+      sandbox.contentWindow.postMessage({ action: "execute", code: code }, "*");
+    } else {
+      const line = document.createElement("div");
+      line.style.color = "#ffaa00";
+      line.textContent = "Executing on page...";
+      consoleOutput.appendChild(line);
+
+      chrome.runtime.sendMessage({ action: "execute_js", code: code }, (response) => {
+        consoleOutput.innerHTML = "";
+        const resLine = document.createElement("div");
+        if (response.error) {
+          resLine.style.color = "#ff5555";
+          resLine.textContent = "[Error] " + response.error;
+        } else {
+          resLine.style.color = "#00ffcc";
+          resLine.textContent = "[Result] " + (response.result || "Executed successfully (no output).");
+        }
+        consoleOutput.appendChild(resLine);
+      });
+    }
   });
 
   document.getElementById("kix-clear").addEventListener("click", () => {
@@ -161,18 +201,16 @@ if (!document.getElementById("kix-executor")) {
     if (e.data.action === "console") {
       const line = document.createElement("div");
       line.style.marginBottom = "4px";
-      
       if (e.data.type === "error") {
-        line.style.color = "#ff5555";
-        line.textContent = "❌ " + e.data.text;
+        line.style.color = "#ff5555"; 
+        line.textContent = "[Error] " + e.data.text;
       } else if (e.data.type === "result") {
-        line.style.color = "#00ffcc";
-        line.textContent = "➜ " + e.data.text;
+        line.style.color = "#00ffcc"; 
+        line.textContent = "[Result] " + e.data.text;
       } else {
-        line.style.color = "#333";
-        line.textContent = e.data.text;
+        line.style.color = "#333"; 
+        line.textContent = "[Log] " + e.data.text;
       }
-      
       consoleOutput.appendChild(line);
       consoleOutput.scrollTop = consoleOutput.scrollHeight;
     }
@@ -184,7 +222,6 @@ if (!document.getElementById("kix-executor")) {
     btn.addEventListener("click", () => {
       const action = btn.dataset.action;
       devOutput.textContent = "Loading...";
-
       if (action === "html") {
         devOutput.textContent = document.documentElement.outerHTML.substring(0, 10000) + "\n\n...[TRUNCATED]";
       } else if (action === "cookies") {
@@ -200,14 +237,14 @@ if (!document.getElementById("kix-executor")) {
     });
   });
 
-  // --- Settings Theme Logic ---
+  // --- Theme ---
   document.getElementById("theme-toggle").addEventListener("change", (e) => {
-    if (e.target.checked) {
-      ui.classList.remove("light-glass");
-      ui.classList.add("dark-glass");
-    } else {
-      ui.classList.remove("dark-glass");
-      ui.classList.add("light-glass");
+    if (e.target.checked) { 
+      ui.classList.remove("light-glass"); 
+      ui.classList.add("dark-glass"); 
+    } else { 
+      ui.classList.remove("dark-glass"); 
+      ui.classList.add("light-glass"); 
     }
   });
 }
