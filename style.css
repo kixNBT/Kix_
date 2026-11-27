@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+#kix-executor {
+  position: fixed; top: 100px; left: 100px; width: 550px; height: 500px;
+  border-radius: 12px; z-index: 2147483647; display: flex; flex-direction: column;
+  font-family: 'Inter', sans-serif; overflow: hidden; transition: background 0.3s, color 0.3s;
+}
+#kix-executor.light-glass {
+  background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%); border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.15); color: #111;
+}
+#kix-executor.dark-glass {
+  background: rgba(20, 20, 25, 0.75); backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%); border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.5); color: #eee;
+}
+
+/* Header */
+#kix-header { display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid rgba(0, 0, 0, 0.05); cursor: grab; user-select: none; }
+.dark-glass #kix-header { border-bottom-color: rgba(255,255,255,0.1); }
+#kix-header:active { cursor: grabbing; }
+.kix-logo { font-weight: 700; font-size: 16px; margin-right: 20px; }
+.dark-glass .kix-logo { color: #00ffcc; }
+.kix-header-tabs { display: flex; gap: 15px; font-size: 13px; font-weight: 500; }
+.kix-htab { cursor: pointer; opacity: 0.6; transition: 0.2s; }
+.kix-htab:hover, .kix-htab.active { opacity: 1; font-weight: 600; }
+.dark-glass .kix-htab.active { color: #00ffcc; }
+.kix-window-controls { margin-left: auto; display: flex; gap: 12px; }
+.kix-window-controls span { cursor: pointer; font-size: 14px; opacity: 0.6; }
+.kix-window-controls span:hover { opacity: 1; }
+
+/* Login Overlay */
+#kix-login-overlay { position: absolute; top: 45px; left: 0; width: 100%; height: calc(100% - 45px); background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; transition: transform 0.4s, opacity 0.4s; }
+.dark-glass #kix-login-overlay { background: rgba(20, 20, 25, 0.9); }
+#kix-hash-input { width: 80%; height: 80px; padding: 10px; border-radius: 6px; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); font-family: 'JetBrains Mono', monospace; font-size: 11px; resize: none; outline: none; margin-bottom: 15px; }
+.dark-glass #kix-hash-input { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #fff; }
+#kix-login-btn { padding: 8px 30px; background: #111; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.dark-glass #kix-login-btn { background: #00ffcc; color: #000; }
+#kix-error-msg { color: #ff3333; font-size: 12px; font-weight: 600; margin-top: 15px; display: none; }
+
+/* App Layout */
+#kix-main-app { display: none; flex-direction: column; height: 100%; width: 100%; }
+.kix-tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.kix-tab-content.active { display: flex; }
+.kix-home-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 20px; }
+.kix-home-container p { color: #666; margin-bottom: 30px; font-size: 13px; }
+.dark-glass .kix-home-container p { color: #aaa; }
+.kix-lang-buttons { display: flex; gap: 20px; }
+.kix-lang-btn { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 120px; padding: 20px; border-radius: 12px; cursor: pointer; background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.05); color: inherit; font-size: 14px; font-weight: 500; transition: 0.2s; }
+.dark-glass .kix-lang-btn { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+.kix-lang-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+.kix-lang-btn .icon { font-size: 24px; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #f7df1e; }
+
+/* Toolbar & Editor */
+.kix-toolbar { padding: 8px 15px; display: flex; gap: 10px; border-bottom: 1px solid rgba(0, 0, 0, 0.05); align-items: center; }
+.dark-glass .kix-toolbar { border-bottom-color: rgba(255,255,255,0.1); }
+.kix-btn { background: none; border: none; color: inherit; font-size: 13px; font-weight: 500; cursor: pointer; padding: 4px 8px; border-radius: 4px; opacity: 0.8; }
+.kix-btn:hover { background: rgba(0,0,0,0.05); opacity: 1; }
+.dark-glass .kix-btn:hover { background: rgba(255,255,255,0.1); }
+.kix-editor { display: flex; background: rgba(255, 255, 255, 0.4); border-bottom: 1px solid rgba(0,0,0,0.1); }
+.dark-glass .kix-editor { background: rgba(0, 0, 0, 0.3); border-bottom-color: rgba(255,255,255,0.1); }
+#kix-code { width: 100%; height: 100%; padding: 15px; background: transparent; border: none; outline: none; resize: none; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.5; color: inherit; }
+
+/* Console */
+.kix-console { flex: 1; padding: 10px; background: rgba(0,0,0,0.03); font-family: 'JetBrains Mono', monospace; font-size: 12px; overflow-y: auto; border-top: 1px solid rgba(0,0,0,0.05); }
+.dark-glass .kix-console { background: rgba(0,0,0,0.6); border-top-color: rgba(255,255,255,0.1); }
+
+/* DevTools & Settings */
+.kix-devtools-view { flex: 1; overflow: auto; padding: 10px; background: rgba(0,0,0,0.05); }
+.dark-glass .kix-devtools-view { background: rgba(0,0,0,0.5); }
+#kix-dev-output { margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; white-space: pre-wrap; color: #333; }
+.dark-glass #kix-dev-output { color: #00ffcc; }
+
+.kix-setting-row { display: flex; justify-content: space-between; width: 100%; max-width: 300px; padding: 15px; background: rgba(0,0,0,0.03); border-radius: 8px; margin-top: 20px;}
+.dark-glass .kix-setting-row { background: rgba(255,255,255,0.05); }
+.kix-switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+.kix-switch input { opacity: 0; width: 0; height: 0; }
+.kix-switch .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+.kix-switch .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+.kix-switch input:checked + .slider { background-color: #00ffcc; }
+.kix-switch input:checked + .slider:before { transform: translateX(18px); }
