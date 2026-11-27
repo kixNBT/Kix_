@@ -4,7 +4,7 @@
 ### Made With:
 [![icons](https://skillicons.dev/icons?i=js,html,css,)](github.com/kixnbt/kix_)
 
-This extension is a project for testing Javascript & Python execution for Chromium browsers
+This extension is a project for testing Javascript & Chrome API execution for Chromium browsers
 
 The extension contains the following permissions
 
@@ -52,5 +52,5 @@ Without these permissions our extension wouldn't work under **Normal Circumstanc
 
 Our goals with **Kix** is to create an Chrome Extension that acts like an Executor for the user to have more control over their Chromium browser. The extension currently has implemented inside of it:
 
-- An Executor For JavaScript and Python
+- An Executor For JavaScript and ChromeAPI
 - A better Devtools (In progress)
